@@ -1,1 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>CMMS - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #0d47a1;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .menu a {
+      display: block;
+      padding: 25px;
+      background: #ffffff;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      color: #0d47a1;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+
+    .menu a:hover {
+      background: #0d47a1;
+      color: #fff;
+      transform: translateY(-3px);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    🏭 CMMS – Maintenance System
+  </header>
+
+  <div class="container">
+    <div class="menu">
+
+      <!-- แจ้งซ่อม -->
+      <a href="form.html">
+        🛠️<br>
+        Create Work Order
+      </a>
+
+      <!-- JOB STATUS (Technician) -->
+      <a href="https://airservicepcg-ux.github.io/CMMS/technician.html">
+        📋<br>
+        JOB STATUS
+      </a>
+
+      <!-- เตรียมต่อยอด -->
+      <a href="#" onclick="alert('Coming soon')">
+        📊<br>
+        Maintenance KPI
+      </a>
+
+      <a href="#" onclick="alert('Coming soon')">
+        ⚙️<br>
+        Asset Master
+      </a>
+
+    </div>
+  </div>
+
+  <footer>
+    CMMS | Powered by Google Sheets & Apps Script
+  </footer>
+
+</body>
+</html>
 
