@@ -97,41 +97,10 @@ input, textarea, select{
   margin-top:10px;
   font-weight:bold;
 }
-
-/* ==============================
- LOADING OVERLAY (NEW)
-============================== */
-.loading-overlay{
-  position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(255,255,255,0.85);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  z-index:9999;
-}
-.loading-overlay.hidden{display:none;}
-.spinner{
-  width:48px;height:48px;
-  border:5px solid #ddd;
-  border-top:5px solid #1f3c88;
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-  margin-bottom:10px;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 
 <body>
-
-<!-- ✅ Loading Overlay -->
-<div id="loading" class="loading-overlay hidden">
-  <div class="spinner"></div>
-  <div id="loadingText">กำลังโหลดข้อมูล...</div>
-</div>
 
 <div class="top-nav">
   <button onclick="goHome()">⬅ Home</button>
@@ -166,7 +135,7 @@ input, textarea, select{
 </select>
 
 <label>Problem</label>
-<textarea id="problem"></textarea>
+<textarea id="problem" placeholder="อธิบายอาการ / ปัญหาที่พบ"></textarea>
 
 <label>Priority</label>
 <select id="priority">
@@ -176,37 +145,39 @@ input, textarea, select{
   <option>Low</option>
 </select>
 
-<label>Owner</label>
+<label>Owner (Responsible Dept.)</label>
 <select id="owner">
   <option value="">-- Select Owner --</option>
-  <option value="MTN">MTN</option>
-  <option value="ADC">ADC</option>
-  <option value="FAD">FAD</option>
-  <option value="CTC">CTC</option>
-  <option value="PRD">PRD</option>
-  <option value="QC_">QC</option>
-  <option value="QA_">QA</option>
-  <option value="WH5">WH</option>
-  <option value="HSE">HSE</option>
-  <option value="WHA">WHA</option>
+  <option value="MTN">MTN – Maintenance</option>
+  <option value="ADC">ADC – Administration Center</option>
+  <option value="FAD">FAD – Factory Administration</option>
+  <option value="CTC">CTC – Canteen Center</option>
+  <option value="PRD">PRD – Production</option>
+  <option value="QC_">QC – Quality Control</option>
+  <option value="QA_">QA – Quality Assurance</option>
+  <option value="WH5">WH – Warehouse</option>
+  <option value="HSE">HSE – Safety</option>
+  <option value="WHA">WHA – Warehouse Production</option>
 </select>
 
+<!-- ✅ FIX -->
 <label>Owner name</label>
-<input id="owner_name">
+<input id="owner_name" placeholder="ชื่อผู้แจ้งงาน">
 
 <label>Email</label>
-<input id="email">
+<input type="email" id="email"/>
 
+<!-- ✅ FIX -->
 <label>Phone</label>
-<input id="phone">
+<input type="tel" id="phone" placeholder="0xxxxxxxxx"/>
 
-<label>Photo</label>
+<label>Photo (หน้างานจริง, max 4)</label>
 <button type="button" class="photo-btn" onclick="takePhoto()">📸 Take Photo</button>
 <div id="photo-count">0 / 4</div>
-<input type="file" id="cameraInput" accept="image/*" capture style="display:none">
+<input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none"/>
 <div id="preview"></div>
 
-<button id="submitBtn" class="submit-btn" onclick="submitWO()">Submit</button>
+<button id="submitBtn" class="submit-btn" onclick="submitWO()">Submit Work Order</button>
 <div id="status" class="status-text"></div>
 
 </div>
@@ -216,18 +187,7 @@ input, textarea, select{
  CONFIG
 ============================== */
 const API_URL = "https://script.google.com/macros/s/AKfycbzRfWNIS9k7psXzY8Zi_YThivvrvEtzSx4RfV8_GeeRQQ_1yRN3DA6R6E3VDFU5xJAmHQ/exec";
-const el=id=>document.getElementById(id);
-
-/* ==============================
- LOADING HELPERS (NEW)
-============================== */
-function showLoading(txt){
-  el("loadingText").innerText = txt || "กำลังโหลดข้อมูล...";
-  el("loading").classList.remove("hidden");
-}
-function hideLoading(){
-  el("loading").classList.add("hidden");
-}
+const el = id => document.getElementById(id);
 
 /* ==============================
  NAV
@@ -237,45 +197,137 @@ function goHome(){
 }
 
 /* ==============================
- LOAD ASSET LIST (WRAPPED)
+ LOAD ASSET LIST
 ============================== */
-showLoading("กำลังโหลดรายการเครื่องจักร...");
-fetch(API_URL+"?mode=asset")
-.then(r=>r.json())
-.then(list=>{
-  const sel=el("asset_id");
-  sel.innerHTML=`<option value="">-- Select Asset --</option>`;
+fetch(API_URL + "?mode=asset")
+.then(r => r.json())
+.then(list => {
+  const sel = el("asset_id");
+  sel.innerHTML = `<option value="">-- Select Asset --</option>`;
   list.forEach(id=>{
     const o=document.createElement("option");
-    o.value=id;o.textContent=id;
+    o.value=id;
+    o.textContent=id;
     sel.appendChild(o);
   });
-})
-.finally(hideLoading);
+});
 
 /* ==============================
- ASSET DETAIL (WRAPPED)
+ ASSET DETAIL
 ============================== */
 async function loadAssetDetail(assetId){
   if(!assetId){
     el("assetDetail").style.display="none";
     return;
   }
-  showLoading("กำลังดึงข้อมูลเครื่องจักร...");
-  const r=await fetch(API_URL+"?mode=assetDetail&asset_id="+encodeURIComponent(assetId));
-  const a=await r.json();
+  const r = await fetch(API_URL+"?mode=assetDetail&asset_id="+encodeURIComponent(assetId));
+  const a = await r.json();
+  if(a.error) return;
+
   el("assetDetail").style.display="block";
-  el("d_name").innerText=a.asset_name||"";
-  el("d_class").innerText=a.asset_class||"";
-  el("d_kw").innerText=a.kw||"";
-  el("d_hp").innerText=a.hp||"";
-  el("d_line").innerText=a.line||"";
-  el("d_location").innerText=a.location||"";
-  el("d_status").innerText=a.status||"";
-  el("d_desc").innerText=a.description||"";
-  hideLoading();
+  el("d_name").innerText = a.asset_name || "";
+  el("d_class").innerText = a.asset_class || "";
+  el("d_kw").innerText = a.kw || "";
+  el("d_hp").innerText = a.hp || "";
+  el("d_line").innerText = a.line || "";
+  el("d_location").innerText = a.location || "";
+  el("d_status").innerText = a.status || "";
+  el("d_desc").innerText = a.description || "";
 }
-el("asset_id").addEventListener("change",e=>loadAssetDetail(e.target.value));
+el("asset_id").addEventListener("change",e=>{
+  loadAssetDetail(e.target.value);
+});
+
+/* ==============================
+ QR SCAN
+============================== */
+let qr;
+function openQRScanner(){
+  el("qr-reader").style.display="block";
+  el("closeQR").style.display="block";
+  qr = new Html5Qrcode("qr-reader");
+  qr.start({facingMode:"environment"},{fps:10,qrbox:250},txt=>{
+    el("asset_id").value = txt.trim();
+    loadAssetDetail(txt.trim());
+    closeQR();
+  });
+}
+function closeQR(){
+  if(qr){ qr.stop().catch(()=>{}); qr=null; }
+  el("qr-reader").style.display="none";
+  el("closeQR").style.display="none";
+}
+
+/* ==============================
+ PHOTO
+============================== */
+let images=[];
+const maxPhotos=4;
+function takePhoto(){
+  if(images.length>=maxPhotos){
+    alert("ถ่ายได้สูงสุด 4 รูป");
+    return;
+  }
+  el("cameraInput").click();
+}
+el("cameraInput").addEventListener("change",()=>{
+  const file = el("cameraInput").files[0];
+  if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    images.push(r.result);
+    const img=document.createElement("img");
+    img.src=r.result;
+    el("preview").appendChild(img);
+    el("photo-count").innerText = images.length+" / "+maxPhotos;
+  };
+  r.readAsDataURL(file);
+});
+
+/* ==============================
+ SUBMIT (FINAL FIX)
+============================== */
+async function submitWO(){
+  if(!el("asset_id").value || !el("problem").value){
+    alert("กรุณาเลือก Asset และกรอก Problem");
+    return;
+  }
+
+  el("submitBtn").disabled = true;
+  el("status").innerText = "⏳ กำลังส่งข้อมูล...";
+
+  const payload = {
+    asset_id: el("asset_id").value,
+    line: el("line").value,
+    problem: el("problem").value,
+    priority: el("priority").value,
+    owner: el("owner").value,
+    owner_name: el("owner_name").value.trim(),  // ✅ FIX
+    email: el("email").value.trim(),
+    phone: el("phone").value.trim(),             // ✅ FIX
+    images: images
+  };
+
+  try{
+    const r = await fetch(API_URL,{
+      method:"POST",
+      body: JSON.stringify(payload)
+    });
+
+    const d = await r.json();
+
+    if(d.status==="success"){
+      alert("✅ Created "+d.wo_id);
+      location.reload();
+    }else{
+      throw new Error(d.message || "GAS Error");
+    }
+  }catch(err){
+    alert("❌ Error\n"+err.message);
+    el("submitBtn").disabled=false;
+    el("status").innerText="";
+  }
+}
 </script>
 
 </body>
