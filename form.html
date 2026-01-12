@@ -145,14 +145,31 @@ input, textarea, select{
   <option>Low</option>
 </select>
 
-<label>Owner</label>
-<input id="owner"/>
+<label>Owner (Responsible Dept.)</label>
+<select id="owner">
+  <option value="">-- Select Owner --</option>
+  <option value="MTN">MTN – Maintenance</option>
+  <option value="ADC">ADC – Administration Center</option>
+  <option value="FAD">FAD – Factory Administration</option>
+  <option value="CTC">CTC – Canteen Center</option>
+  <option value="PRD">PRD – Production</option>
+  <option value="QC_">QC – Quality Control</option>
+  <option value="QA_">QA – Quality Assurance</option>
+  <option value="WH5">WH – Warehouse</option>
+  <option value="HSE">HSE – Safety</option>
+  <option value="WHA">WHA – Warehouse Production</option>
+</select>
+
+<!-- ✅ FIX -->
+<label>Owner name</label>
+<input id="owner_name" placeholder="ชื่อผู้แจ้งงาน">
 
 <label>Email</label>
 <input type="email" id="email"/>
 
+<!-- ✅ FIX -->
 <label>Phone</label>
-<input type="tel" id="phone"/>
+<input type="tel" id="phone" placeholder="0xxxxxxxxx"/>
 
 <label>Photo (หน้างานจริง, max 4)</label>
 <button type="button" class="photo-btn" onclick="takePhoto()">📸 Take Photo</button>
@@ -268,7 +285,7 @@ el("cameraInput").addEventListener("change",()=>{
 });
 
 /* ==============================
- SUBMIT (✔ FIXED)
+ SUBMIT (FINAL FIX)
 ============================== */
 async function submitWO(){
   if(!el("asset_id").value || !el("problem").value){
@@ -279,37 +296,34 @@ async function submitWO(){
   el("submitBtn").disabled = true;
   el("status").innerText = "⏳ กำลังส่งข้อมูล...";
 
-  const payload={
-    asset_id:el("asset_id").value,
-    line:el("line").value,
-    problem:el("problem").value,
-    priority:el("priority").value,
-    owner:el("owner").value,
-    email:el("email").value,
-    phone:el("phone").value,
-    images:images
+  const payload = {
+    asset_id: el("asset_id").value,
+    line: el("line").value,
+    problem: el("problem").value,
+    priority: el("priority").value,
+    owner: el("owner").value,
+    owner_name: el("owner_name").value.trim(),  // ✅ FIX
+    email: el("email").value.trim(),
+    phone: el("phone").value.trim(),             // ✅ FIX
+    images: images
   };
 
   try{
     const r = await fetch(API_URL,{
       method:"POST",
-      body:JSON.stringify(payload)   // ❗ ไม่มี headers
+      body: JSON.stringify(payload)
     });
 
-    const text = await r.text();
-    const d = JSON.parse(text);
+    const d = await r.json();
 
     if(d.status==="success"){
       alert("✅ Created "+d.wo_id);
       location.reload();
     }else{
-      alert("❌ GAS Error\n"+text);
-      el("submitBtn").disabled=false;
-      el("status").innerText="";
+      throw new Error(d.message || "GAS Error");
     }
   }catch(err){
-    console.error(err);
-    alert("❌ Network / GAS Error\n"+err.message);
+    alert("❌ Error\n"+err.message);
     el("submitBtn").disabled=false;
     el("status").innerText="";
   }
