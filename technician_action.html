@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<title>Technician Action</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+  }
+
+  header {
+    background: #1e3a8a;
+    color: white;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  header a {
+    color: white;
+    text-decoration: none;
+    background: #2563eb;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  main {
+    max-width: 520px;
+    margin: 30px auto;
+    background: white;
+    padding: 24px;
+    border-radius: 14px;
+    box-shadow: 0 10px 20px rgba(0,0,0,.08);
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #1e3a8a;
+  }
+
+  label {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 15px;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  button {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .start {
+    background: #facc15;
+    color: #000;
+  }
+
+  .finish {
+    background: #22c55e;
+    color: white;
+  }
+
+  .status {
+    margin-top: 16px;
+    font-weight: 600;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <a href="job_status.html">← Back</a>
+  <strong>🔧 Technician Action</strong>
+</header>
+
+<main>
+  <h2>Work Order Control</h2>
+
+  <label>Work Order ID</label>
+  <input id="woId" placeholder="WO-GEN-20260112-001" />
+
+  <label>Technician Name</label>
+  <input id="technician" placeholder="Somchai" />
+
+  <label>Fix Detail (Finish only)</label>
+  <textarea id="detail" rows="3" placeholder="เปลี่ยนอะไหล่ / แก้ไขสายไฟ"></textarea>
+
+  <div class="actions">
+    <button class="start" onclick="startJob()">▶️ Start</button>
+    <button class="finish" onclick="finishJob()">✅ Finish</button>
+  </div>
+
+  <div id="statusMsg" class="status"></div>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzPlxZPUvYTiiVPhum7JDbarfIfbpZ2c8_tJa7AZb4OypRJwFB171oC-UqpDdkKMdEhSA/exec";
+
+function startJob() {
+  sendAction("START");
+}
+
+function finishJob() {
+  sendAction("FINISH");
+}
+
+function sendAction(action) {
+  const wo_id = document.getElementById("woId").value.trim();
+  const technician = document.getElementById("technician").value.trim();
+  const detail = document.getElementById("detail").value.trim();
+  const msg = document.getElementById("statusMsg");
+
+  if (!wo_id) {
+    msg.textContent = "❌ กรุณาใส่ WO ID";
+    msg.style.color = "red";
+    return;
+  }
+
+  fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      mode: "updateStatus",
+      wo_id: wo_id,
+      action: action,
+      technician: technician,
+      detail: detail
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.status === "ok") {
+      msg.textContent = "✅ บันทึกสถานะเรียบร้อย";
+      msg.style.color = "green";
+    } else {
+      msg.textContent = "❌ " + (res.error || "เกิดข้อผิดพลาด");
+      msg.style.color = "red";
+    }
+  })
+  .catch(err => {
+    msg.textContent = "❌ Network error";
+    msg.style.color = "red";
+  });
+}
+</script>
+
+</body>
+</html>
