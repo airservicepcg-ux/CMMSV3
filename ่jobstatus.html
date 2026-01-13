@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Technician – Job Status</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial;background:#f4f6f9;margin:0}
+header{background:#1f3c88;color:#fff;padding:16px;font-size:20px;font-weight:bold}
+.container{max-width:1200px;margin:20px auto;padding:0 16px}
+
+.filters{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:10px;margin-bottom:12px
+}
+.filters input,.filters select{
+  padding:8px;border-radius:6px;border:1px solid #ccc
+}
+
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
+th{background:#1f3c88;color:#fff;padding:10px;text-align:left}
+td{padding:10px;border-bottom:1px solid #eee}
+
+.badge{
+  padding:4px 10px;border-radius:12px;font-weight:bold;font-size:12px
+}
+.OPEN{background:#ffeb3b}
+.IN_PROGRESS{background:#03a9f4;color:#fff}
+.CLOSED{background:#4caf50;color:#fff}
+
+.btn{
+  padding:6px 10px;border-radius:6px;border:none;
+  background:#1f3c88;color:#fff;cursor:pointer
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  ← <a href="index.html" style="color:#fff;text-decoration:none">Home</a>
+  &nbsp;&nbsp;🔧 Technician – Job Status
+</header>
+
+<div class="container">
+
+<div class="filters">
+  <input id="f_wo" placeholder="WO ID">
+  <input id="f_asset" placeholder="Asset">
+  <input id="f_problem" placeholder="Problem">
+  <select id="f_priority">
+    <option value="">All Priority</option>
+    <option>Critical</option>
+    <option>High</option>
+    <option>Medium</option>
+    <option>Low</option>
+  </select>
+  <select id="f_status">
+    <option value="">All Status</option>
+    <option>OPEN</option>
+    <option>IN_PROGRESS</option>
+    <option>CLOSED</option>
+  </select>
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>WO ID</th>
+  <th>Asset</th>
+  <th>Problem</th>
+  <th>Priority</th>
+  <th>Status</th>
+  <th>Action</th>
+</tr>
+</thead>
+<tbody id="tbody">
+<tr><td colspan="6">⏳ Loading...</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzPlxZPUvYTiiVPhum7JDbarfIfbpZ2c8_tJa7AZb4OypRJwFB171oC-UqpDdkKMdEhSA/exec";
+
+let allJobs = [];
+
+const el = id => document.getElementById(id);
+
+fetch(API_URL + "?mode=jobStatus")
+.then(r=>r.json())
+.then(data=>{
+  allJobs = data;
+  render(allJobs);
+})
+.catch(()=>{
+  el("tbody").innerHTML = `<tr><td colspan="6">❌ Load failed</td></tr>`;
+});
+
+function render(list){
+  if(!list.length){
+    el("tbody").innerHTML = `<tr><td colspan="6">ไม่มีงานค้าง</td></tr>`;
+    return;
+  }
+  el("tbody").innerHTML = list.map(j=>`
+    <tr>
+      <td><b>${j.wo_id}</b></td>
+      <td>${j.asset_id}</td>
+      <td>${j.problem}</td>
+      <td>${j.priority}</td>
+      <td><span class="badge ${j.status}">${j.status}</span></td>
+      <td>
+        ${j.pdf_url ? `<button class="btn" onclick="window.open('${j.pdf_url}')">📄 View PDF</button>` : "-"}
+      </td>
+    </tr>
+  `).join("");
+}
+
+document.querySelectorAll(".filters input,.filters select")
+.forEach(elm=>elm.addEventListener("input",filter));
+
+function filter(){
+  const wo = el("f_wo").value.toLowerCase();
+  const asset = el("f_asset").value.toLowerCase();
+  const prob = el("f_problem").value.toLowerCase();
+  const pri = el("f_priority").value;
+  const st = el("f_status").value;
+
+  render(allJobs.filter(j=>
+    (!wo || j.wo_id.toLowerCase().includes(wo)) &&
+    (!asset || j.asset_id.toLowerCase().includes(asset)) &&
+    (!prob || j.problem.toLowerCase().includes(prob)) &&
+    (!pri || j.priority===pri) &&
+    (!st || j.status===st)
+  ));
+}
+</script>
+
+</body>
+</html>
